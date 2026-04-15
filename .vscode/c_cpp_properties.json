@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "MSYS2 MinGW64",
+            "includePath": [
+                "${workspaceFolder}/cpp_tb/pipeline",
+                "${workspaceFolder}/cpp_tb/pipeline/obj_dir",
+                "C:/msys64/mingw64/share/verilator/include",
+                "C:/msys64/mingw64/share/verilator/include/vltstd",
+                "C:/msys64/mingw64/include"
+            ],
+            "defines": [],
+            "compilerPath": "C:/msys64/mingw64/bin/g++.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}

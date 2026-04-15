@@ -1,0 +1,106 @@
+You are a senior CPU verification and RTL design expert. Perform a deep technical audit of my 5-stage pipelined RISC-V (RV32I) processor implementation.
+
+PROJECT CONTEXT:
+
+* Pipeline: IF → ID → EX → MEM → WB
+* Features implemented:
+
+  * ALU (RV32I subset)
+  * Register file (32x32, x0 hardwired)
+  * Instruction decoder
+  * Forwarding unit (EX/MEM/WB)
+  * Hazard detection (load-use stalls)
+  * Pipeline registers (IF/ID, ID/EX, EX/MEM, MEM/WB)
+* Features NOT yet implemented:
+
+  * Branch handling / flush
+  * Advanced memory system
+
+INPUT FILES:
+(I will provide SystemVerilog files for ALU, regfile, decoder, forwarding, hazard unit, and full pipeline)
+
+TASK:
+
+STEP 1: RTL correctness audit
+
+* Check for:
+
+  * unintended latches
+  * blocking vs non-blocking misuse
+  * combinational loops
+  * incorrect reset behavior
+  * improper signal widths
+
+STEP 2: Pipeline correctness
+
+* Verify:
+
+  * correct stage separation
+  * no illegal cross-stage signal usage
+  * proper pipeline register usage
+  * control signal alignment across stages
+
+STEP 3: Hazard handling validation
+
+* Check forwarding logic:
+
+  * MEM vs WB priority
+  * dual operand forwarding
+  * x0 protection
+* Check stall logic:
+
+  * correct load-use detection
+  * correct stall duration (exactly 1 cycle)
+  * proper PC and IF/ID freeze
+  * correct bubble insertion into ID/EX
+
+STEP 4: Data correctness analysis
+
+* Identify scenarios where results may still be incorrect
+* Provide concrete failing instruction sequences (if any)
+
+STEP 5: Corner case analysis
+
+* Test:
+
+  * back-to-back dependencies
+  * multiple writes to same register
+  * x0 interactions
+  * simultaneous forwarding + stall conditions
+
+STEP 6: Performance sanity
+
+* Estimate CPI behavior
+* Identify unnecessary stalls or inefficiencies
+
+STEP 7: Spec compliance (RV32I subset)
+
+* Verify instruction decoding correctness
+* Check immediate generation
+* Validate ALU operations vs spec
+
+STEP 8: Debuggability
+
+* Evaluate whether the design is traceable via waveform
+* Suggest signals to expose for debugging (WaveEye integration)
+
+OUTPUT FORMAT:
+
+1. Critical bugs (must fix immediately)
+2. Functional risks (may break under certain cases)
+3. Minor issues (style / optimization)
+4. Missing features (for full compliance)
+5. Suggested test cases (very specific instruction sequences)
+6. Overall verdict:
+
+   * Not correct / Partially correct / Functionally correct / Robust
+
+CONSTRAINTS:
+
+* Be brutally honest
+* Do not give generic feedback
+* Point to exact signals/modules causing issues
+* Provide concrete examples of failures
+
+GOAL:
+Determine whether this CPU is truly functionally correct under all supported conditions, not just passing simple testbenches.

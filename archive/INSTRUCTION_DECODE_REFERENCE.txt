@@ -1,0 +1,135 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+//  RV32I INSTRUCTION DECODE REFERENCE
+//  Complete Mapping: Instruction → ALU Operation
+//
+//  This document provides comprehensive decoding information for the RV32I ISA
+//  focusing on I-type and R-type ALU instructions.
+//
+////////////////////////////////////////////////////////////////////////////////
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 1: R-TYPE INSTRUCTIONS (opcode=0110011)
+═══════════════════════════════════════════════════════════════════════════════
+
+Format: | funct7 | rs2 | rs1 | funct3 | rd | opcode |
+
+Instruction | funct7[5] | funct3 | alu_op | Operation
+────────────────────────────────────────────────────────────────────────────
+ADD         | 0         | 000    | 0000   | rd = rs1 + rs2 (arithmetic)
+SUB         | 1         | 000    | 0001   | rd = rs1 - rs2 (arithmetic)
+AND         | 0         | 111    | 0010   | rd = rs1 & rs2 (bitwise AND)
+OR          | 0         | 110    | 0011   | rd = rs1 | rs2 (bitwise OR)
+XOR         | 0         | 100    | 0100   | rd = rs1 ^ rs2 (bitwise XOR)
+SLT         | 0         | 010    | 0101   | rd = (rs1 < rs2) ? 1 : 0 (signed)
+SLTU        | 0         | 011    | 1000   | rd = (rs1 < rs2) ? 1 : 0 (unsigned)
+SLL         | 0         | 001    | 0110   | rd = rs1 << rs2[4:0] (shift left logical)
+SRL         | 0         | 101    | 0111   | rd = rs1 >> rs2[4:0] (logical right shift)
+SRA         | 1         | 101    | 1001   | rd = rs1 >>> rs2[4:0] (arithmetic right shift)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 2: I-TYPE INSTRUCTIONS (opcode=0010011)
+═══════════════════════════════════════════════════════════════════════════════
+
+Format: | imm[11:0] | rs1 | funct3 | rd | opcode |
+
+Instruction | funct3 | imm[11:5] | alu_op | Operation
+────────────────────────────────────────────────────────────────────────────
+ADDI        | 000    | x         | 0000   | rd = rs1 + sign_extend(imm)
+SLTI        | 010    | x         | 0101   | rd = (rs1 < sign_extend(imm)) ? 1 : 0 (signed)
+SLTIU       | 011    | x         | 1000   | rd = (rs1 < imm_unsigned) ? 1 : 0 (unsigned)
+XORI        | 100    | x         | 0100   | rd = rs1 ^ sign_extend(imm)
+ORI         | 110    | x         | 0011   | rd = rs1 | sign_extend(imm)
+ANDI        | 111    | x         | 0010   | rd = rs1 & sign_extend(imm)
+SLLI        | 001    | 0xxxxxxx  | 0110   | rd = rs1 << imm[4:0] (shift left logical)
+SRLI        | 101    | 0xxxxxxx  | 0111   | rd = rs1 >> imm[4:0] (logical right shift)
+SRAI        | 101    | 1xxxxxxx  | 1001   | rd = rs1 >>> imm[4:0] (arithmetic right shift)
+
+Note: For SRLI/SRAI, imm[11:5] (stored as funct7) determines the operation:
+      - funct7[5] = 0 → SRLI (logical right shift)
+      - funct7[5] = 1 → SRAI (arithmetic right shift)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 3: ALU OPERATION CODES
+═══════════════════════════════════════════════════════════════════════════════
+
+alu_op | Operation              | Signed/Unsigned | Notes
+────────────────────────────────────────────────────────────────────────────
+0000   | ADD (a + b)            | N/A             | Basic addition
+0001   | SUB (a - b)            | N/A             | Basic subtraction
+0010   | AND (a & b)            | N/A             | Bitwise AND
+0011   | OR  (a | b)            | N/A             | Bitwise OR
+0100   | XOR (a ^ b)            | N/A             | Bitwise XOR
+0101   | SLT (a < b)            | SIGNED          | Set Less Than (signed)
+0110   | SLL (a << b[4:0])      | N/A             | Shift Left Logical
+0111   | SRL (a >> b[4:0])      | UNSIGNED        | Shift Right Logical (zero-fill)
+1000   | SLTU (a < b)           | UNSIGNED        | Set Less Than Unsigned
+1001   | SRA (a >>> b[4:0])     | SIGNED          | Shift Right Arithmetic (sign-fill)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 4: SIGNED VS. UNSIGNED COMPARISONS
+═══════════════════════════════════════════════════════════════════════════════
+
+SLT (Set Less Than, Signed):
+  - Compare rs1 and rs2 as 32-bit SIGNED integers
+  - Result: 1 if rs1 < rs2 (as signed), else 0
+  - Hardware: $signed(a) < $signed(b)
+  - Example: -1 < 2 → true (not "0xFFFFFFFF < 0x00000002" in unsigned)
+
+SLTI (Set Less Than Immediate, Signed):
+  - Immediate is SIGN-EXTENDED to 32 bits
+  - Compare rs1 and sign_extend(imm_i) as SIGNED integers
+  - Result: 1 if rs1 < sign_extend(imm), else 0
+  - Example: SLTI x1, x1, -1  (imm=-1 sign-extends to 0xFFFFFFFF)
+            If x1=0x00000000: 0 < -1 (as signed) → false → result = 0
+
+SLTIU (Set Less Than Immediate, Unsigned):
+  - Immediate is TREATED AS UNSIGNED or zero-extended
+  - Compare rs1 and immediate as UNSIGNED integers
+  - Result: 1 if rs1 < unsign(imm), else 0
+  - Example: SLTIU x1, x1, -1  (imm=0xFFFFFFFF when unsigned)
+            If x1=0x00000000: 0 < 0xFFFFFFFF (unsigned) → true → result = 1
+
+KEY DIFFERENCE:
+  - SLTI with imm=-1:  checks if value < -1 (recognizes -1 as negative)
+  - SLTIU with imm=-1: checks if value < 0xFFFFFFFF (largest unsigned)
+  
+  → If rs1=0: SLTI result=1 (0 < -1 is false in signed, hence result=0)
+             SLTIU result=1 (0 < 0xFFFFFFFF is true in unsigned, hence result=1)
+
+SHIFT RIGHT ARITHMETIC (SRA, SRAI):
+  - Logical right shift (SRL/SRLI): >> fills in zeros from the left
+  - Arithmetic right shift (SRA/SRAI): >>> fills in the SIGN BIT from the left
+  - Purpose: Preserve sign during division by power-of-2
+  - Example: -5 >> 1 with SRL = 0x7FFFFFFD (wrong for negative)
+             -5 >>> 1 with SRA = 0xFFFFFFFE (correct: -3, which is -5/2 rounded)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 5: DECODER LOGIC SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+R-Type Decoding:
+  case ({funct7, funct3})
+    {0, 000}: alu_op = ADD
+    {1, 000}: alu_op = SUB
+    {0, 111}: alu_op = AND
+    {0, 110}: alu_op = OR
+    {0, 100}: alu_op = XOR
+    {0, 010}: alu_op = SLT
+    {0, 011}: alu_op = SLTU
+    {0, 001}: alu_op = SLL
+    {0, 101}: alu_op = SRL
+    {1, 101}: alu_op = SRA
+
+I-Type Decoding:
+  case (funct3)
+    000: alu_op = ADD
+    010: alu_op = SLT
+    011: alu_op = SLTU
+    100: alu_op = XOR
+    110: alu_op = OR
+    111: alu_op = AND
+    001: alu_op = SLL
+    101: if (funct7[5]) alu_op = SRA; else alu_op = SRL;
+
+═══════════════════════════════════════════════════════════════════════════════

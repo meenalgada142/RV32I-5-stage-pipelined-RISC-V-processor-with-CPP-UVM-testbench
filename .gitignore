@@ -1,0 +1,19 @@
+# Build artifacts
+*.exe
+*.o
+*.a
+*.vvp
+
+# Verilator generated model
+obj_dir/
+
+# Test output
+pipeline_stress.csv
+
+# Temp / scratch files
+compile_errors.txt
+tmp_test.cpp
+
+# VS Code local settings (keep c_cpp_properties.json, ignore user settings)
+.vscode/settings.json
+.vscode/launch.json
